@@ -436,7 +436,7 @@ Version=1.0
 Type=Application
 Name=Open Screen for Mars Gaming
 Comment=Controlador nativo para pantallas LCD Mars Gaming (MS9132)
-Exec={app_dir}/run.sh
+Exec={app_dir}/run.sh --minimized
 Icon=utilities-system-monitor
 Terminal=false
 Categories=Utility;HardwareSettings;
@@ -479,6 +479,16 @@ Categories=Utility;HardwareSettings;
                 
                 last_media = config.get('last_media', None)
                 if last_media:
-                    self.media_worker.load_media(last_media)
+                    # Usar los callbacks directos para asegurar que la UI se actualice visualmente
+                    if last_media == "WORLDBOX_AI":
+                        self.on_wb_selected()
+                    elif last_media == "ULTRA_MC":
+                        self.on_mc_selected()
+                    elif last_media == "TERRARIA_AI":
+                        self.on_terraria_selected()
+                    elif last_media == "VIRTUAL_PET":
+                        self.on_pet_selected()
+                    else:
+                        self.media_worker.load_media(last_media)
             except Exception as e:
                 print(f"Error cargando config: {e}")

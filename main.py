@@ -9,7 +9,9 @@ def main():
     # app.setWindowIcon(QIcon("icon.png"))
     
     window = OpenMarsApp()
-    window.show()
+    
+    if "--minimized" not in sys.argv:
+        window.show()
     
     sys.exit(app.exec())
 

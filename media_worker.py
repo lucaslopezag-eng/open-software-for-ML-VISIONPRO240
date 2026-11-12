@@ -38,13 +38,18 @@ class MediaWorker(QThread):
         self.scale_mode = scale_mode
 
     def process_pil_frame(self, img):
+        # Para la previsualización UI, mantenemos la imagen sin rotar
+        preview_img = img.copy()
+        
         if self.rotation != 0:
             img = img.rotate(self.rotation, expand=True)
             
         if self.scale_mode == "fit":
             img = ImageOps.fit(img.convert('RGB'), (480, 480), Image.LANCZOS)
+            preview_img = ImageOps.fit(preview_img.convert('RGB'), (480, 480), Image.LANCZOS)
         else:
             img = img.convert('RGB').resize((480, 480), Image.LANCZOS)
+            preview_img = preview_img.convert('RGB').resize((480, 480), Image.LANCZOS)
             
         r, g, b = img.split()
         img_bgr = Image.merge('RGB', (b, g, r))
@@ -56,8 +61,8 @@ class MediaWorker(QThread):
                 
         payload = CABECERA + bytes(pixeles) + PIE
         
-        # Convert to QImage for UI preview (RGB mode)
-        preview = img.convert("RGB")
+        # Convert to QImage for UI preview (RGB mode) usando la versión sin rotar
+        preview = preview_img.convert("RGB")
         data = preview.tobytes("raw", "RGB")
         qimage = QImage(data, 480, 480, QImage.Format_RGB888)
         
@@ -164,6 +169,12 @@ class MediaWorker(QThread):
                 interval = 1.0 / 30.0
                 
                 while self.running and self.media_path == path:
+                    if hasattr(engine, 'is_alive') and not engine.is_alive():
+                        print("[WorldBox] El juego se cerró o crasheó. Reiniciando automáticamente...")
+                        with open("/tmp/worldbox_restarts.log", "a") as f:
+                            f.write(f"[{time.ctime()}] El juego se cerró o crasheó. Reiniciando automáticamente...\n")
+                        break
+                        
                     start_time = time.time()
                     pil_img = engine.get_frame()
                     payload, qimage = self.process_pil_frame(pil_img)
